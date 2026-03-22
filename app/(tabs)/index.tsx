@@ -1,98 +1,189 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { StyleSheet, View, Pressable, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export default function HomeScreen() {
+export default function DashboardScreen() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const isDark = colorScheme === 'dark';
+  
+  const themeStyles = {
+    cardBackground: isDark ? '#1C1C1E' : '#FFFFFF',
+    textPrimary: isDark ? '#FFFFFF' : '#000000',
+    textSecondary: isDark ? '#8E8E93' : '#6B7280',
+    accentColor: '#007AFF', // A primary action blue
+    successColor: '#34C759',
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#000000' : '#F2F2F7' }]}>
+      {/* Header Section */}
+      <View style={styles.header}>
+        <View>
+          <ThemedText type="subtitle" style={{ color: themeStyles.textSecondary }}>Sunday, Mar 22</ThemedText>
+          <ThemedText type="title">Hello, Athlete!</ThemedText>
+        </View>
+        <Pressable style={styles.profileButton}>
+          <Ionicons name="person-circle" size={44} color={themeStyles.accentColor} />
+        </Pressable>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      {/* Daily Summary Metrics */}
+      <View style={styles.metricsContainer}>
+        <View style={[styles.metricCard, { backgroundColor: themeStyles.cardBackground }]}>
+          <View style={styles.metricHeader}>
+            <Ionicons name="flame" size={20} color="#FF9500" />
+            <ThemedText type="defaultSemiBold">Calories</ThemedText>
+          </View>
+          <ThemedText type="title" style={styles.metricValue}>1,200</ThemedText>
+          <ThemedText style={{ color: themeStyles.textSecondary, fontSize: 13 }}>/ 2,500 kcal target</ThemedText>
+        </View>
+
+        <View style={[styles.metricCard, { backgroundColor: themeStyles.cardBackground }]}>
+          <View style={styles.metricHeader}>
+            <Ionicons name="barbell" size={20} color={themeStyles.accentColor} />
+            <ThemedText type="defaultSemiBold">Workouts</ThemedText>
+          </View>
+          <ThemedText type="title" style={styles.metricValue}>3</ThemedText>
+          <ThemedText style={{ color: themeStyles.textSecondary, fontSize: 13 }}>Completed this week</ThemedText>
+        </View>
+      </View>
+
+      {/* Quick Action */}
+      <Pressable style={styles.primaryActionBtn}>
+        <Ionicons name="add-circle" size={24} color="#FFFFFF" />
+        <ThemedText style={styles.primaryActionText}>Start Empty Workout</ThemedText>
+      </Pressable>
+
+      {/* Recent Activity */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <ThemedText type="subtitle">Recent Activity</ThemedText>
+          <Pressable><ThemedText style={{ color: themeStyles.accentColor, fontWeight: '600' }}>See All</ThemedText></Pressable>
+        </View>
+
+        {/* Mock Activity 1 */}
+        <View style={[styles.activityCard, { backgroundColor: themeStyles.cardBackground }]}>
+          <View style={[styles.activityIcon, { backgroundColor: 'rgba(52, 199, 89, 0.15)' }]}>
+             <Ionicons name="fitness" size={24} color={themeStyles.successColor} />
+          </View>
+          <View style={styles.activityDetails}>
+            <ThemedText type="defaultSemiBold">Pull Day (Back & Biceps)</ThemedText>
+            <ThemedText style={{ color: themeStyles.textSecondary, fontSize: 14, marginTop: 2 }}>Yesterday • 1h 15m • 12,000kg</ThemedText>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={themeStyles.textSecondary} />
+        </View>
+
+        {/* Mock Activity 2 */}
+        <View style={[styles.activityCard, { backgroundColor: themeStyles.cardBackground }]}>
+          <View style={[styles.activityIcon, { backgroundColor: 'rgba(255, 149, 0, 0.15)' }]}>
+             <Ionicons name="walk" size={24} color="#FF9500" />
+          </View>
+          <View style={styles.activityDetails}>
+            <ThemedText type="defaultSemiBold">Morning Run</ThemedText>
+            <ThemedText style={{ color: themeStyles.textSecondary, fontSize: 14, marginTop: 2 }}>Friday • 5.2 km • 32m</ThemedText>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={themeStyles.textSecondary} />
+        </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 80, // Giving extra room for iOS notch
+    paddingBottom: 24,
+  },
+  profileButton: {
+    padding: 4,
+  },
+  metricsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: 16,
+    marginBottom: 32,
+  },
+  metricCard: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  metricHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    marginBottom: 16,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  metricValue: {
+    fontSize: 32,
+    lineHeight: 36,
+    marginBottom: 4,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  primaryActionBtn: {
+    backgroundColor: '#007AFF',
+    marginHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 18,
+    borderRadius: 16,
+    gap: 10,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 6,
+    marginBottom: 40,
+  },
+  primaryActionText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  section: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  activityCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  activityIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  activityDetails: {
+    flex: 1,
   },
 });
