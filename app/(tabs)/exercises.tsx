@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, FlatList, TextInput, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, View, FlatList, TextInput, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/themed-text';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useExercises, type Exercise } from '@/src/hooks/useExercises';
-import { ExerciseModal } from '@/src/components/ExerciseModal';
+import { ExerciseModal, type ExerciseFormData } from '@/src/components/ExerciseModal';
 import { Link } from 'expo-router';
 
 const MUSCLES = [
@@ -18,7 +18,10 @@ const MUSCLES = [
 
 export default function ExercisesScreen() {
   const isDark = (useColorScheme() ?? 'light') === 'dark';
-  const { exercises, fetchExercises, addCustomExercise, deleteExercise } = useExercises();
+  const {
+    exercises, totalCount, isLoading, hasMore,
+    fetchExercises, fetchMore, addCustomExercise,
+  } = useExercises();
 
   const [search, setSearch] = useState('');
   const [activeMuscle, setActiveMuscle] = useState('');
@@ -64,13 +67,23 @@ export default function ExercisesScreen() {
 
   const separator = () => <View style={[styles.separator, { backgroundColor: separatorClr }]} />;
 
+  const renderFooter = () => {
+    if (!hasMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color="#007AFF" />
+        <ThemedText style={styles.footerText}>Loading more...</ThemedText>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: bg }]} edges={['top']}>
       <View style={styles.header}>
         <View>
           <ThemedText type="title">Library</ThemedText>
           <ThemedText style={{ color: '#8E8E93' }}>
-            {exercises.length} results
+            {exercises.length} of {totalCount} exercises
           </ThemedText>
         </View>
         <Pressable onPress={() => setModalVisible(true)} style={styles.addButton}>
@@ -117,12 +130,15 @@ export default function ExercisesScreen() {
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={separator}
+        ListFooterComponent={renderFooter}
+        onEndReached={fetchMore}
+        onEndReachedThreshold={0.3}
       />
 
       <ExerciseModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        onSave={(name, type, part) => addCustomExercise(name, type, part)}
+        onSave={(data: ExerciseFormData) => addCustomExercise(data)}
       />
     </SafeAreaView>
   );
@@ -171,4 +187,9 @@ const styles = StyleSheet.create({
   rowName: { fontSize: 16, fontWeight: '600', marginBottom: 2 },
   rowMuscle: { color: '#007AFF', fontSize: 13, textTransform: 'capitalize' },
   separator: { height: 1, marginLeft: 84 },
+  footerLoader: {
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+    gap: 8, paddingVertical: 20,
+  },
+  footerText: { color: '#8E8E93', fontSize: 14 },
 });

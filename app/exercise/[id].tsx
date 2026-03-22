@@ -7,13 +7,13 @@ import { ThemedText } from '@/components/themed-text';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useExercises, type Exercise } from '@/src/hooks/useExercises';
-import { ExerciseModal } from '@/src/components/ExerciseModal';
+import { ExerciseModal, type ExerciseFormData } from '@/src/components/ExerciseModal';
 
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const isDark = (useColorScheme() ?? 'light') === 'dark';
-  const { getExerciseById, updateExercise, deleteExercise } = useExercises();
+  const { getExerciseById, updateExercise, deleteExercise, toFormData } = useExercises();
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const { width: screenWidth } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
@@ -46,6 +46,10 @@ export default function ExerciseDetailScreen() {
   try { imagesArr = JSON.parse(exercise.images); } catch (_e) { /* empty */ }
   let instructionsArr: string[] = [];
   try { instructionsArr = JSON.parse(exercise.instructions); } catch (_e) { /* empty */ }
+  let primaryArr: string[] = [];
+  try { primaryArr = JSON.parse(exercise.primary_muscles); } catch (_e) { /* empty */ }
+  let secondaryArr: string[] = [];
+  try { secondaryArr = JSON.parse(exercise.secondary_muscles); } catch (_e) { /* empty */ }
 
   const imageWidth = screenWidth;
   const imageHeight = screenWidth * 0.75;
@@ -79,26 +83,21 @@ export default function ExerciseDetailScreen() {
     );
   };
 
-  const handleEdit = () => {
-    setEditModalVisible(true);
-  };
-
-  const handleSaveEdit = async (name: string, type: string, bodyPart: string) => {
-    await updateExercise(exercise.id, name, type, bodyPart);
+  const handleSaveEdit = async (data: ExerciseFormData) => {
+    await updateExercise(exercise.id, data);
     await loadExercise();
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={['top']}>
       <ScrollView bounces={false} style={{ flex: 1 }}>
-        {/* Top bar with back + actions */}
+        {/* Top bar */}
         <View style={styles.topBar}>
           <Pressable style={styles.topBtn} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={22} color="#FFF" />
           </Pressable>
-
           <View style={styles.topActions}>
-            <Pressable style={styles.topBtn} onPress={handleEdit}>
+            <Pressable style={styles.topBtn} onPress={() => setEditModalVisible(true)}>
               <Ionicons name="create-outline" size={22} color="#FFF" />
             </Pressable>
             <Pressable style={[styles.topBtn, { backgroundColor: 'rgba(255,59,48,0.8)' }]} onPress={handleDelete}>
@@ -119,38 +118,20 @@ export default function ExerciseDetailScreen() {
               style={{ width: imageWidth, height: imageHeight }}
             >
               {imagesArr.map((uri, i) => (
-                <Image
-                  key={i}
-                  source={{ uri }}
-                  style={{ width: imageWidth, height: imageHeight }}
-                  contentFit="cover"
-                  transition={200}
-                />
+                <Image key={i} source={{ uri }} style={{ width: imageWidth, height: imageHeight }} contentFit="cover" transition={200} />
               ))}
             </ScrollView>
-
             {imagesArr.length > 1 ? (
               <View style={styles.carouselControls}>
-                <Pressable
-                  style={[styles.arrowBtn, activeIndex === 0 && styles.arrowDisabled]}
-                  onPress={() => goToSlide(-1)}
-                  disabled={activeIndex === 0}
-                >
+                <Pressable style={[styles.arrowBtn, activeIndex === 0 && styles.arrowDisabled]} onPress={() => goToSlide(-1)} disabled={activeIndex === 0}>
                   <Ionicons name="chevron-back" size={22} color="#FFF" />
                 </Pressable>
-                <ThemedText style={styles.slideCounter}>
-                  {activeIndex + 1} / {imagesArr.length}
-                </ThemedText>
-                <Pressable
-                  style={[styles.arrowBtn, activeIndex === imagesArr.length - 1 && styles.arrowDisabled]}
-                  onPress={() => goToSlide(1)}
-                  disabled={activeIndex === imagesArr.length - 1}
-                >
+                <ThemedText style={styles.slideCounter}>{activeIndex + 1} / {imagesArr.length}</ThemedText>
+                <Pressable style={[styles.arrowBtn, activeIndex === imagesArr.length - 1 && styles.arrowDisabled]} onPress={() => goToSlide(1)} disabled={activeIndex === imagesArr.length - 1}>
                   <Ionicons name="chevron-forward" size={22} color="#FFF" />
                 </Pressable>
               </View>
             ) : null}
-
             {imagesArr.length > 1 ? (
               <View style={styles.dots}>
                 {imagesArr.map((_, i) => (
@@ -168,53 +149,64 @@ export default function ExerciseDetailScreen() {
         <View style={[styles.content, { backgroundColor: bg }]}>
           <ThemedText type="title" style={{ marginBottom: 16 }}>{exercise.name}</ThemedText>
 
+          {/* Tags */}
           <View style={styles.tags}>
-            <View style={styles.tag}>
-              <ThemedText style={styles.tagTxt}>{exercise.body_part}</ThemedText>
-            </View>
+            {primaryArr.map(m => (
+              <View key={m} style={styles.tag}>
+                <ThemedText style={styles.tagTxt}>{m}</ThemedText>
+              </View>
+            ))}
             <View style={styles.tag}>
               <ThemedText style={styles.tagTxt}>{exercise.type}</ThemedText>
             </View>
-            <View style={styles.tag}>
-              <ThemedText style={styles.tagTxt}>{exercise.equipment}</ThemedText>
-            </View>
-            <View style={[styles.tag, { backgroundColor: 'rgba(52, 199, 89, 0.1)' }]}>
-              <ThemedText style={[styles.tagTxt, { color: '#34C759' }]}>{exercise.level}</ThemedText>
-            </View>
+            {exercise.equipment ? (
+              <View style={styles.tag}>
+                <ThemedText style={styles.tagTxt}>{exercise.equipment}</ThemedText>
+              </View>
+            ) : null}
+            {exercise.level ? (
+              <View style={[styles.tag, { backgroundColor: 'rgba(52,199,89,0.1)' }]}>
+                <ThemedText style={[styles.tagTxt, { color: '#34C759' }]}>{exercise.level}</ThemedText>
+              </View>
+            ) : null}
           </View>
 
-          {exercise.force ? (
+          {/* Force & Mechanic */}
+          {(exercise.force || exercise.mechanic) ? (
             <View style={[styles.infobox, { backgroundColor: cardBg }]}>
               <ThemedText style={styles.infoboxTitle}>Force &amp; Mechanic</ThemedText>
               <ThemedText style={{ color: '#8E8E93', textTransform: 'capitalize' }}>
-                {exercise.force}{exercise.mechanic ? ` · ${exercise.mechanic}` : ''}
+                {[exercise.force, exercise.mechanic].filter(Boolean).join(' · ')}
               </ThemedText>
             </View>
           ) : null}
 
-          <View style={[styles.infobox, { backgroundColor: cardBg }]}>
-            <ThemedText style={styles.infoboxTitle}>Secondary Muscles</ThemedText>
-            <ThemedText style={{ color: '#8E8E93', textTransform: 'capitalize' }}>
-              {exercise.secondary_muscles && exercise.secondary_muscles !== '[]'
-                ? JSON.parse(exercise.secondary_muscles).join(', ')
-                : 'None listed'}
-            </ThemedText>
-          </View>
+          {/* Secondary Muscles */}
+          {secondaryArr.length > 0 ? (
+            <View style={[styles.infobox, { backgroundColor: cardBg }]}>
+              <ThemedText style={styles.infoboxTitle}>Secondary Muscles</ThemedText>
+              <ThemedText style={{ color: '#8E8E93', textTransform: 'capitalize' }}>
+                {secondaryArr.join(', ')}
+              </ThemedText>
+            </View>
+          ) : null}
 
-          <ThemedText type="subtitle" style={styles.sectionTitle}>Instructions</ThemedText>
-
-          <View style={[styles.instructionList, { backgroundColor: cardBg }]}>
-            {instructionsArr.length > 0 ? instructionsArr.map((step: string, i: number) => (
-              <View key={i} style={styles.stepBlock}>
-                <View style={styles.stepNum}>
-                  <ThemedText style={styles.stepNumTxt}>{i + 1}</ThemedText>
-                </View>
-                <ThemedText style={styles.stepText}>{step}</ThemedText>
+          {/* Instructions */}
+          {instructionsArr.length > 0 ? (
+            <>
+              <ThemedText type="subtitle" style={styles.sectionTitle}>Instructions</ThemedText>
+              <View style={[styles.instructionList, { backgroundColor: cardBg }]}>
+                {instructionsArr.map((step: string, i: number) => (
+                  <View key={i} style={styles.stepBlock}>
+                    <View style={styles.stepNum}>
+                      <ThemedText style={styles.stepNumTxt}>{i + 1}</ThemedText>
+                    </View>
+                    <ThemedText style={styles.stepText}>{step}</ThemedText>
+                  </View>
+                ))}
               </View>
-            )) : (
-              <ThemedText style={{ padding: 16 }}>No specific instructions available.</ThemedText>
-            )}
-          </View>
+            </>
+          ) : null}
         </View>
       </ScrollView>
 
@@ -223,9 +215,7 @@ export default function ExerciseDetailScreen() {
         visible={editModalVisible}
         onClose={() => setEditModalVisible(false)}
         onSave={handleSaveEdit}
-        initialName={exercise.name}
-        initialType={exercise.type}
-        initialBodyPart={exercise.body_part}
+        initialData={toFormData(exercise)}
         mode="edit"
       />
     </SafeAreaView>
@@ -259,7 +249,7 @@ const styles = StyleSheet.create({
   dotActive: { backgroundColor: '#007AFF', width: 18 },
   content: { padding: 24, borderTopLeftRadius: 30, borderTopRightRadius: 30, marginTop: -30 },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 },
-  tag: { backgroundColor: 'rgba(0, 122, 255, 0.1)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
+  tag: { backgroundColor: 'rgba(0,122,255,0.1)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
   tagTxt: { color: '#007AFF', fontWeight: 'bold', textTransform: 'capitalize' },
   infobox: { padding: 16, borderRadius: 16, marginBottom: 24 },
   infoboxTitle: { fontWeight: 'bold', marginBottom: 4 },
