@@ -1,9 +1,15 @@
 export const createTablesQuery = `
-  DROP TABLE IF EXISTS workout_set;
-  DROP TABLE IF EXISTS workout_exercise;
-  DROP TABLE IF EXISTS workout;
-  DROP TABLE IF EXISTS exercise;
-  DROP TABLE IF EXISTS profile;
+  CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS gym (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      icon TEXT DEFAULT '🏋️',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 
   CREATE TABLE IF NOT EXISTS profile (
       id INTEGER PRIMARY KEY DEFAULT 1,
@@ -31,11 +37,13 @@ export const createTablesQuery = `
 
   CREATE TABLE IF NOT EXISTS workout (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      gym_id INTEGER,
       name TEXT,
       start_time DATETIME NOT NULL,
       end_time DATETIME,
       notes TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (gym_id) REFERENCES gym(id) ON DELETE SET NULL
   );
 
   CREATE TABLE IF NOT EXISTS workout_exercise (

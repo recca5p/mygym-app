@@ -2,8 +2,14 @@ import { StyleSheet, View, Pressable, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useState } from 'react';
+import { useGymContext } from '@/src/store/GymContext';
+import { GymSwitcher } from '@/src/components/GymSwitcher';
 
 export default function DashboardScreen() {
+  const { activeGym } = useGymContext();
+  const [switcherVisible, setSwitcherVisible] = useState(false);
+
   const colorScheme = useColorScheme() ?? 'light';
   const isDark = colorScheme === 'dark';
   
@@ -21,10 +27,15 @@ export default function DashboardScreen() {
       <View style={styles.header}>
         <View>
           <ThemedText type="subtitle" style={{ color: themeStyles.textSecondary }}>Sunday, Mar 22</ThemedText>
-          <ThemedText type="title">Hello, Athlete!</ThemedText>
+          <Pressable onPress={() => setSwitcherVisible(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <ThemedText type="title">{activeGym?.name || 'MyGym'}</ThemedText>
+            <Ionicons name="chevron-down" size={20} color={themeStyles.textSecondary} style={{ marginTop: 4 }} />
+          </Pressable>
         </View>
-        <Pressable style={styles.profileButton}>
-          <Ionicons name="person-circle" size={44} color={themeStyles.accentColor} />
+        <Pressable style={styles.profileButton} onPress={() => setSwitcherVisible(true)}>
+          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: themeStyles.cardBackground, justifyContent: 'center', alignItems: 'center' }}>
+            <ThemedText style={{ fontSize: 24 }}>{activeGym?.icon || '🏋️'}</ThemedText>
+          </View>
         </Pressable>
       </View>
 
@@ -86,6 +97,11 @@ export default function DashboardScreen() {
           <Ionicons name="chevron-forward" size={20} color={themeStyles.textSecondary} />
         </View>
       </View>
+
+      <GymSwitcher 
+        visible={switcherVisible} 
+        onClose={() => setSwitcherVisible(false)} 
+      />
     </ScrollView>
   );
 }
