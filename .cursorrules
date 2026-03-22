@@ -1,0 +1,41 @@
+# MyGyma App - AI Generation Rules
+
+These are the strict context rules for generating code for the MyGyma application.
+
+## 1. Tech Stack Overview
+- **Environment**: Latest Node LTS version. All libraries used must be stable versions.
+- **Package Manager**: Use `yarn` exclusively.
+- **Framework**: React Native with Expo (specifically using Expo Router for all navigation).
+- **Language**: TypeScript (Strict Mode).
+- **Database**: Local-first SQL Database using `expo-sqlite`. 
+- **Styling**: Standard React Native `StyleSheet` prioritizing modern, vibrant, and dynamic aesthetics.
+
+## 2. Directory Structure Conventions
+- **`app/`**: This directory must ONLY contain Expo Router screens, layouts (`_layout.tsx`), and API routes. NO business logic.
+- **`src/components/`**: Reusable UI components. They should be "dumb" components whenever possible, receiving props. Add modern animations where it enhances the UI experience without sacrificing performance.
+- **`src/database/`**: Everything related to SQLite. Include schema initialization, repository patterns for queries, migrations, and types representing database rows.
+- **`src/hooks/`**: Custom React hooks for encapsulating business logic, especially for interacting with the database.
+- **`src/store/`**: Global state management (Zustand or Context based). Keep this minimal and rely on database for persistence.
+- **`src/theme/`**: Global color palettes, typography, spacing, and styling utilities. Do not use generic colors; prefer harmonious themes (like sleek dark modes).
+- **`src/utils/`**: Helper functions, date formatters, math utilities.
+
+## 3. Database Architecture (Local-First)
+- We are using `expo-sqlite` for all persistent data.
+- **No External API**: Do not generate fetching logic (e.g., `fetch` or `axios`) for core data operations unless specifically asked for an external integration (like exporting data). 
+- All data flows: UI Component -> Custom Hook -> `src/database` Query -> SQLite.
+- Keep the `profile` table as a one-row table.
+- Treat `weight_kg` in `workout_set` as positive for added weight, and inherently allow negative weights for assisted bodyweight exercises (like assisted pull-ups).
+
+## 4. UI/UX Aesthetics Requirements
+- **Premium Feel**: Avoid basic MVP looks. Incorporate interactive hover/press states, fluid micro-animations (e.g., `react-native-reanimated`), and smooth screen transitions.
+- **Typography and Coloring**: Use dynamic coloring and sophisticated typography (imported Google fonts if necessary) rather than default system defaults for headers and titles.
+- **Responsiveness**: Ensure content works on both small and large iOS devices.
+
+## 5. Exports and Data Sharing
+- As a local-first app, provide capabilities to query complete datasets and convert them to CSV or JSON formats stored locally, using standard React Native sharing endpoints (e.g., `expo-sharing`) so the user can extract their data easily.
+
+## 6. General Guidelines
+- **Zero Warnings Policy**: Code must strictly adhere to best practices. Create clean code with absolutely no runtime warnings, no unresolved type errors, and no linter warnings.
+- Always think through edge cases for offline states (e.g., app interrupted mid-workout).
+- Prefer functional components and React hooks.
+- Provide clear comments explaining complex database queries or state updates.
