@@ -4,15 +4,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/themed-text';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useExercises, type Exercise } from '@/src/hooks/useExercises';
 import { ExerciseModal, type ExerciseFormData } from '@/src/components/ExerciseModal';
+import { parseStringArray } from '@/src/utils/json';
 
 export default function ExerciseDetailScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const isDark = (useColorScheme() ?? 'light') === 'dark';
+  const isDark = useColorScheme() === 'dark';
   const { getExerciseById, updateExercise, deleteExercise, toFormData } = useExercises();
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const { width: screenWidth } = useWindowDimensions();
@@ -20,16 +21,19 @@ export default function ExerciseDetailScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
 
-  const loadExercise = async () => {
-    if (id) {
-      const ex = await getExerciseById(id as string);
-      setExercise(ex);
-    }
-  };
-
   useEffect(() => {
-    loadExercise();
-  }, [id]);
+    let cancelled = false;
+
+    void getExerciseById(id).then((result) => {
+      if (!cancelled) {
+        setExercise(result);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getExerciseById, id]);
 
   if (!exercise) {
     return (
@@ -42,14 +46,10 @@ export default function ExerciseDetailScreen() {
   const bg = isDark ? '#000' : '#F2F2F7';
   const cardBg = isDark ? '#1C1C1E' : '#FFF';
 
-  let imagesArr: string[] = [];
-  try { imagesArr = JSON.parse(exercise.images); } catch (_e) { /* empty */ }
-  let instructionsArr: string[] = [];
-  try { instructionsArr = JSON.parse(exercise.instructions); } catch (_e) { /* empty */ }
-  let primaryArr: string[] = [];
-  try { primaryArr = JSON.parse(exercise.primary_muscles); } catch (_e) { /* empty */ }
-  let secondaryArr: string[] = [];
-  try { secondaryArr = JSON.parse(exercise.secondary_muscles); } catch (_e) { /* empty */ }
+  const imagesArr = parseStringArray(exercise.images);
+  const instructionsArr = parseStringArray(exercise.instructions);
+  const primaryArr = parseStringArray(exercise.primary_muscles);
+  const secondaryArr = parseStringArray(exercise.secondary_muscles);
 
   const imageWidth = screenWidth;
   const imageHeight = screenWidth * 0.75;
@@ -85,7 +85,7 @@ export default function ExerciseDetailScreen() {
 
   const handleSaveEdit = async (data: ExerciseFormData) => {
     await updateExercise(exercise.id, data);
-    await loadExercise();
+    setExercise(await getExerciseById(exercise.id));
   };
 
   return (

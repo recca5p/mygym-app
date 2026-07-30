@@ -1,50 +1,105 @@
-# Welcome to your Expo app 👋
+# MyGym
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+MyGym is a local-first workout tracker built with Expo. It supports multiple gyms,
+live workout sessions, reusable templates, set logging, workout history, exercise
+search, and custom exercises across iOS, Android, and web.
 
-## Get started
+## Stack
 
-1. Install dependencies
+- Expo SDK 57 and Expo Router
+- React Native 0.86 and React 19.2
+- `expo-sqlite` with idempotent local migrations
+- Strict TypeScript 6 and ESLint 9
+- Yarn Classic
 
-   ```bash
-   npm install
-   ```
+The app has no backend. User data is stored in the device-local `mygyma.db`.
 
-2. Start the app
+## Setup
 
-   ```bash
-   npx expo start
-   ```
+Requirements:
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+- Node.js 22.13 or newer
+- Yarn 1.22.22
 
 ```bash
-npm run reset-project
+yarn install
+yarn start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Use `yarn ios`, `yarn android`, or `yarn web` to target a platform.
 
-## Learn more
+## Quality commands
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+yarn lint          # ESLint, zero warnings allowed
+yarn typecheck     # Strict TypeScript
+yarn doctor        # Expo dependency/project diagnostics
+yarn build:web     # Static web export
+yarn validate      # All commands above
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+For changes to Expo, routing, Metro, icons/fonts, or native modules, also run:
 
-## Join the community
+```bash
+npx expo install --check
+yarn audit --groups dependencies
+output_dir=$(mktemp -d /tmp/mygyma-export.XXXXXX)
+npx expo export --platform all --output-dir "$output_dir"
+```
 
-Join our community of developers creating universal apps.
+## Architecture
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```text
+app/                screens and file-based navigation
+src/components/     workout/exercise/gym feature UI
+src/store/          GymContext and active WorkoutContext
+src/hooks/          typed SQLite domain operations
+src/database/       schema, migrations, indexes, and exercise seed
+src/utils/          pure shared helpers
+components/         shared themed primitives
+hooks/              theme/platform hooks
+scripts/            offline exercise-data refresh and merge tools
+```
+
+Provider order is:
+
+```text
+ThemeProvider
+└── SQLiteProvider
+    └── GymProvider
+        └── WorkoutProvider
+            └── Expo Router stack
+```
+
+See [AGENTS.md](./AGENTS.md) for working rules and
+[the MyGym maintainer skill](./.agents/skills/mygyma-maintainer/SKILL.md) for the
+implementation workflow and detailed architecture/database references.
+
+## Database
+
+Database initialization enables WAL and foreign keys, creates missing tables, runs
+idempotent migrations, creates indexes, and seeds exercises only when the exercise
+table is empty. It must not drop user tables.
+
+Current schema version is `2`. Schema work must update both
+`src/database/schema.ts` and the migration path in `src/database/dbConfig.tsx`.
+
+## Exercise data maintenance
+
+Exercise data is bundled into the app. Refreshing the optional external source
+requires a RapidAPI key in the shell environment:
+
+```bash
+RAPIDAPI_KEY=your_key node scripts/fetchData.js
+node scripts/mergeData.js
+```
+
+Never place the key in source, JSON, logs, or documentation. The fetch script exits
+without saving partial results if any request fails.
+
+## Agent handoff
+
+- `AGENTS.md`: authoritative project rules
+- `.agents/skills/mygyma-maintainer/`: reusable workflow and detailed references
+- `MEMORY.md`: current implementation snapshot and known next work
+- `CLAUDE.md` and `.claude/rules.md`: compatibility pointers for Claude-based agents

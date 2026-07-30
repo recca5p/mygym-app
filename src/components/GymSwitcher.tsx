@@ -3,7 +3,7 @@ import { Modal, View, StyleSheet, Pressable, ScrollView, TextInput, KeyboardAvoi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons';
 import { useGymContext, type Gym } from '@/src/store/GymContext';
 
 const ICONS = ['🏋️', '💪', '🏃', '🚴', '🥊', '🧗', '🏊', '🤸'];
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function GymSwitcher({ visible, onClose }: Props) {
-  const isDark = (useColorScheme() ?? 'light') === 'dark';
+  const isDark = useColorScheme() === 'dark';
   const { gyms, activeGym, switchGym, createGym, updateGym, deleteGym } = useGymContext();
   
   const [formMode, setFormMode] = useState<'none' | 'add' | 'edit'>('none');

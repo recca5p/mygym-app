@@ -38,12 +38,15 @@ export const createTablesQuery = `
   CREATE TABLE IF NOT EXISTS workout (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       gym_id INTEGER,
+      template_id INTEGER,
       name TEXT,
+      status TEXT DEFAULT 'completed',
       start_time DATETIME NOT NULL,
       end_time DATETIME,
       notes TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (gym_id) REFERENCES gym(id) ON DELETE SET NULL
+      FOREIGN KEY (gym_id) REFERENCES gym(id) ON DELETE SET NULL,
+      FOREIGN KEY (template_id) REFERENCES workout(id) ON DELETE SET NULL
   );
 
   CREATE TABLE IF NOT EXISTS workout_exercise (
@@ -64,8 +67,19 @@ export const createTablesQuery = `
       reps INTEGER,
       duration_seconds INTEGER,
       distance_km REAL,
-      is_warmup BOOLEAN DEFAULT 0,
+      set_type TEXT DEFAULT 'normal',
       is_completed BOOLEAN DEFAULT 0,
       FOREIGN KEY (workout_exercise_id) REFERENCES workout_exercise(id) ON DELETE CASCADE
   );
+`;
+
+export const createIndexesQuery = `
+  CREATE INDEX IF NOT EXISTS idx_exercise_name
+    ON exercise(name);
+  CREATE INDEX IF NOT EXISTS idx_workout_gym_status_start
+    ON workout(gym_id, status, start_time DESC);
+  CREATE INDEX IF NOT EXISTS idx_workout_exercise_workout
+    ON workout_exercise(workout_id, sort_order);
+  CREATE INDEX IF NOT EXISTS idx_workout_set_exercise
+    ON workout_set(workout_exercise_id, set_number);
 `;

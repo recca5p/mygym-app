@@ -1,12 +1,33 @@
-import * as SQLite from 'expo-sqlite';
+import type { SQLiteDatabase } from 'expo-sqlite';
 import exercisesData from './exercises.json';
+import exercisesV2Data from './exercises_v2.json';
 
-export async function seedDatabase(db: SQLite.SQLiteDatabase) {
-  const result = await db.getFirstAsync<{ count: number }>(`SELECT COUNT(*) as count FROM exercise;`);
-  
+interface ExerciseSeed {
+  id?: string;
+  name: string;
+  category?: string;
+  equipment?: string;
+  level?: string;
+  force?: string;
+  mechanic?: string;
+  primaryMuscles?: string[];
+  secondaryMuscles?: string[];
+  instructions?: string[];
+  images?: string[];
+}
+
+export async function seedDatabase(db: SQLiteDatabase) {
+  const result = await db.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) AS count FROM exercise;',
+  );
+
   if (result && result.count === 0) {
-    console.log(`Seeding Deep ExerciseDB data (${exercisesData.length} items)...`);
-    
+    const dataToSeed = (
+      exercisesV2Data.length > 0 ? exercisesV2Data : exercisesData
+    ) as ExerciseSeed[];
+
+    console.log(`Seeding ${dataToSeed.length} exercises...`);
+
     await db.withTransactionAsync(async () => {
       const stmt = await db.prepareAsync(
         `INSERT INTO exercise (
@@ -18,7 +39,7 @@ export async function seedDatabase(db: SQLite.SQLiteDatabase) {
         )`
       );
       try {
-        for (const ex of exercisesData as any[]) {
+        for (const ex of dataToSeed) {
           await stmt.executeAsync({
             $id: ex.id || ex.name.replace(/\s+/g, '_').toLowerCase(),
             $name: ex.name,
@@ -40,7 +61,7 @@ export async function seedDatabase(db: SQLite.SQLiteDatabase) {
         await stmt.finalizeAsync();
       }
     });
-    console.log('Deep Seeding completed!');
+    console.log('Seeding completed!');
   } else {
     console.log('Database already seeded!');
   }

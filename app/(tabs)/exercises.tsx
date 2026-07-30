@@ -3,11 +3,12 @@ import { StyleSheet, View, FlatList, TextInput, Pressable, ScrollView, ActivityI
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/themed-text';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useExercises, type Exercise } from '@/src/hooks/useExercises';
 import { ExerciseModal, type ExerciseFormData } from '@/src/components/ExerciseModal';
 import { Link } from 'expo-router';
+import { parseStringArray } from '@/src/utils/json';
 
 const MUSCLES = [
   'abdominals', 'abductors', 'adductors', 'biceps', 'calves',
@@ -17,9 +18,9 @@ const MUSCLES = [
 ];
 
 export default function ExercisesScreen() {
-  const isDark = (useColorScheme() ?? 'light') === 'dark';
+  const isDark = useColorScheme() === 'dark';
   const {
-    exercises, totalCount, isLoading, hasMore,
+    exercises, totalCount, hasMore,
     fetchExercises, fetchMore, addCustomExercise,
   } = useExercises();
 
@@ -39,8 +40,7 @@ export default function ExercisesScreen() {
   const separatorClr = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
 
   const renderItem = ({ item }: { item: Exercise }) => {
-    let imagesArr: string[] = [];
-    try { imagesArr = JSON.parse(item.images); } catch (_e) { /* empty */ }
+    const imagesArr = parseStringArray(item.images);
     const displayImg = imagesArr.length > 0 ? imagesArr[0] : null;
 
     return (

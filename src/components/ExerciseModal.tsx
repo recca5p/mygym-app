@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Modal, View, TextInput, StyleSheet, Pressable, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { Ionicons } from '@expo/vector-icons';
 
 // Exact options from ExerciseDB JSON
 const CATEGORIES = ['strength', 'stretching', 'plyometrics', 'cardio', 'strongman', 'powerlifting', 'olympic weightlifting'];
@@ -106,41 +105,41 @@ export function ExerciseModal({
   initialData,
   mode = 'create',
 }: ExerciseModalProps) {
-  const isDark = (useColorScheme() ?? 'light') === 'dark';
+  if (!visible) {
+    return null;
+  }
 
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('strength');
-  const [force, setForce] = useState('');
-  const [level, setLevel] = useState('');
-  const [mechanic, setMechanic] = useState('');
-  const [equipment, setEquipment] = useState('');
-  const [primaryMuscles, setPrimaryMuscles] = useState<string[]>([]);
-  const [secondaryMuscles, setSecondaryMuscles] = useState<string[]>([]);
-  const [instructions, setInstructions] = useState('');
+  return (
+    <ExerciseModalForm
+      initialData={initialData}
+      mode={mode}
+      onClose={onClose}
+      onSave={onSave}
+    />
+  );
+}
 
-  useEffect(() => {
-    if (visible && initialData) {
-      setName(initialData.name || '');
-      setCategory(initialData.category || 'strength');
-      setForce(initialData.force || '');
-      setLevel(initialData.level || '');
-      setMechanic(initialData.mechanic || '');
-      setEquipment(initialData.equipment || '');
-      setPrimaryMuscles(initialData.primaryMuscles || []);
-      setSecondaryMuscles(initialData.secondaryMuscles || []);
-      setInstructions(initialData.instructions || '');
-    } else if (visible) {
-      setName('');
-      setCategory('strength');
-      setForce('');
-      setLevel('');
-      setMechanic('');
-      setEquipment('');
-      setPrimaryMuscles([]);
-      setSecondaryMuscles([]);
-      setInstructions('');
-    }
-  }, [visible, initialData]);
+function ExerciseModalForm({
+  onClose,
+  onSave,
+  initialData,
+  mode,
+}: Omit<ExerciseModalProps, 'visible'> & { mode: 'create' | 'edit' }) {
+  const isDark = useColorScheme() === 'dark';
+
+  const [name, setName] = useState(initialData?.name ?? '');
+  const [category, setCategory] = useState(initialData?.category ?? 'strength');
+  const [force, setForce] = useState(initialData?.force ?? '');
+  const [level, setLevel] = useState(initialData?.level ?? '');
+  const [mechanic, setMechanic] = useState(initialData?.mechanic ?? '');
+  const [equipment, setEquipment] = useState(initialData?.equipment ?? '');
+  const [primaryMuscles, setPrimaryMuscles] = useState<string[]>(
+    initialData?.primaryMuscles ?? [],
+  );
+  const [secondaryMuscles, setSecondaryMuscles] = useState<string[]>(
+    initialData?.secondaryMuscles ?? [],
+  );
+  const [instructions, setInstructions] = useState(initialData?.instructions ?? '');
 
   const canSave = name.trim().length > 0 && category.length > 0 && primaryMuscles.length > 0;
 
@@ -166,7 +165,7 @@ export function ExerciseModal({
   const isEdit = mode === 'edit';
 
   return (
-    <Modal visible={visible} animationType="slide" transparent>
+    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

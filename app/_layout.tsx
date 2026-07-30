@@ -1,11 +1,11 @@
 import { SQLiteProvider } from 'expo-sqlite';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
 import { GymProvider, useGymContext } from '@/src/store/GymContext';
+import { WorkoutProvider } from '@/src/store/WorkoutContext';
 import { initializeDatabase } from '@/src/database/dbConfig';
-import { useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router/react-navigation';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -30,7 +30,7 @@ function RootNavigator() {
     } else if (!needsOnboarding && inOnboarding) {
       router.replace('/(tabs)');
     }
-  }, [isLoading, needsOnboarding, segments]);
+  }, [isLoading, needsOnboarding, router, segments]);
 
   if (isLoading) {
     return (
@@ -45,7 +45,6 @@ function RootNavigator() {
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="exercise/[id]" />
-      <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
     </Stack>
   );
 }
@@ -57,8 +56,10 @@ export default function RootLayout() {
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <SQLiteProvider databaseName="mygyma.db" onInit={initializeDatabase}>
         <GymProvider>
-          <RootNavigator />
-          <StatusBar style="auto" />
+          <WorkoutProvider>
+            <RootNavigator />
+            <StatusBar style="auto" />
+          </WorkoutProvider>
         </GymProvider>
       </SQLiteProvider>
     </ThemeProvider>

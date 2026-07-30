@@ -1,6 +1,7 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useRef, useState } from 'react';
 import type { ExerciseFormData } from '@/src/components/ExerciseModal';
+import { parseStringArray } from '@/src/utils/json';
 
 export interface Exercise {
   id: string;
@@ -20,6 +21,22 @@ export interface Exercise {
 
 const PAGE_SIZE = 30;
 
+function buildWhere(searchQuery: string, targetPart: string) {
+  let where = ' WHERE 1=1';
+  const params: Record<string, string> = {};
+
+  if (searchQuery.trim()) {
+    where += ' AND name LIKE $search';
+    params.$search = `%${searchQuery.trim()}%`;
+  }
+  if (targetPart.trim()) {
+    where += ' AND body_part = $part';
+    params.$part = targetPart.toLowerCase();
+  }
+
+  return { where, params };
+}
+
 export function useExercises() {
   const db = useSQLiteContext();
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -27,24 +44,13 @@ export function useExercises() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const lastFilters = useRef({ search: '', muscle: '' });
-
-  /** Build WHERE clause from filters */
-  const buildWhere = (searchQuery: string, targetPart: string) => {
-    let where = ' WHERE 1=1';
-    const params: Record<string, string> = {};
-    if (searchQuery.trim()) {
-      where += ' AND name LIKE $search';
-      params['$search'] = `%${searchQuery}%`;
-    }
-    if (targetPart.trim()) {
-      where += ' AND body_part = $part';
-      params['$part'] = targetPart.toLowerCase();
-    }
-    return { where, params };
-  };
+  const latestRequest = useRef(0);
+  const isFetchingMore = useRef(false);
 
   /** Fetch first page (resets list) */
   const fetchExercises = useCallback(async (searchQuery = '', targetPart = '') => {
+    const requestId = ++latestRequest.current;
+
     try {
       setIsLoading(true);
       lastFilters.current = { search: searchQuery, muscle: targetPart };
@@ -56,26 +62,33 @@ export function useExercises() {
         `SELECT COUNT(*) as cnt FROM exercise${where}`, params
       );
       const total = countResult?.cnt ?? 0;
-      setTotalCount(total);
 
-      // Get first page
       const result = await db.getAllAsync<Exercise>(
         `SELECT * FROM exercise${where} ORDER BY name ASC LIMIT ${PAGE_SIZE};`, params
       );
+
+      if (requestId !== latestRequest.current) {
+        return;
+      }
+
+      setTotalCount(total);
       setExercises(result);
       setHasMore(result.length < total);
     } catch (error) {
       console.error('Error fetching exercises:', error);
     } finally {
-      setIsLoading(false);
+      if (requestId === latestRequest.current) {
+        setIsLoading(false);
+      }
     }
   }, [db]);
 
   /** Fetch next page (appends to list) */
   const fetchMore = useCallback(async () => {
-    if (isLoading || !hasMore) return;
+    if (isFetchingMore.current || isLoading || !hasMore) return;
 
     try {
+      isFetchingMore.current = true;
       setIsLoading(true);
       const { search, muscle } = lastFilters.current;
       const { where, params } = buildWhere(search, muscle);
@@ -92,6 +105,7 @@ export function useExercises() {
     } catch (error) {
       console.error('Error fetching more exercises:', error);
     } finally {
+      isFetchingMore.current = false;
       setIsLoading(false);
     }
   }, [db, exercises.length, hasMore, isLoading, totalCount]);
@@ -169,13 +183,14 @@ export function useExercises() {
     }
   };
 
-  const getExerciseById = async (id: string): Promise<Exercise | null> => {
+  const getExerciseById = useCallback(async (id: string): Promise<Exercise | null> => {
     try {
       return await db.getFirstAsync<Exercise>('SELECT * FROM exercise WHERE id = ?;', [id]);
-    } catch (e) {
+    } catch (error) {
+      console.error('Error fetching exercise:', error);
       return null;
     }
-  };
+  }, [db]);
 
   const deleteExercise = async (id: string) => {
     try {
@@ -188,10 +203,8 @@ export function useExercises() {
 
   /** Build initial form data from an Exercise row */
   const toFormData = (ex: Exercise): ExerciseFormData => {
-    let primaryArr: string[] = [];
-    try { primaryArr = JSON.parse(ex.primary_muscles); } catch { /* empty */ }
-    let secondaryArr: string[] = [];
-    try { secondaryArr = JSON.parse(ex.secondary_muscles); } catch { /* empty */ }
+    const primaryArr = parseStringArray(ex.primary_muscles);
+    const secondaryArr = parseStringArray(ex.secondary_muscles);
 
     return {
       name: ex.name,
@@ -200,8 +213,8 @@ export function useExercises() {
       level: ex.level || '',
       mechanic: ex.mechanic || '',
       equipment: ex.equipment || '',
-      primaryMuscles: Array.isArray(primaryArr) ? primaryArr : [],
-      secondaryMuscles: Array.isArray(secondaryArr) ? secondaryArr : [],
+      primaryMuscles: primaryArr,
+      secondaryMuscles: secondaryArr,
       instructions: instructionsFromJson(ex.instructions),
     };
   };

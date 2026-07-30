@@ -1,0 +1,4 @@
+interface:
+  display_name: "MyGym Maintainer"
+  short_description: "Maintain and extend the MyGym Expo app"
+  default_prompt: "Use $mygyma-maintainer to inspect, implement, and verify the next MyGym task."

@@ -103,8 +103,8 @@ export function GymProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     };
 
-    init();
-  }, [db]);
+    void init();
+  }, [fetchGyms, getActiveGymId, setActiveGymId]);
 
   const switchGym = async (id: number) => {
     const gym = gyms.find(g => g.id === id);

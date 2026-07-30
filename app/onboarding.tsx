@@ -2,7 +2,7 @@ import { Text, View, StyleSheet, Pressable, TextInput, KeyboardAvoidingView, Pla
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@react-native-vector-icons/ionicons';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useGymContext } from '@/src/store/GymContext';
 import { ThemedText } from '@/components/themed-text';
@@ -11,7 +11,7 @@ const ICONS = ['🏋️', '💪', '🏃', '🚴', '🥊', '🧗', '🏊', '🤸'
 
 export default function OnboardingScreen() {
   const router = useRouter();
-  const isDark = (useColorScheme() ?? 'light') === 'dark';
+  const isDark = useColorScheme() === 'dark';
   const { createGym, needsOnboarding } = useGymContext();
 
   const [name, setName] = useState('');
